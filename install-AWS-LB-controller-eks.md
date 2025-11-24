@@ -8,6 +8,8 @@ Guia para instalação do **AWS Load Balancer Controller** em um cluster **Amazo
 > - `<CLUSTER_NAME>`
 > - `<VPC_ID>`
 > - `<LB_ROLE_NAME>`
+> - `<ID_CERTIFICADO>`
+> - `<DOMINIO_EMPRESA>`
 
 ---
 
@@ -274,7 +276,8 @@ Guia para instalação do **AWS Load Balancer Controller** em um cluster **Amazo
 				"elasticloadbalancing:ModifyListener",
 				"elasticloadbalancing:AddListenerCertificates",
 				"elasticloadbalancing:RemoveListenerCertificates",
-				"elasticloadbalancing:ModifyRule"
+				"elasticloadbalancing:ModifyRule",
+				"elasticloadbalancing:SetRulePriorities"
 			],
 			"Resource": "*"
 		}
@@ -458,3 +461,40 @@ Use os logs do controller para debug, se necessário:
 kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
 ```
 Fim do guia de instalação do AWS Load Balancer Controller no EKS.
+
+## 8. Para definir o certificado e utilizar *.seudominio.com.br
+
+1. Crei um certificado na aws (ACM)
+2. Crie um ingress infra no seu EC2
+
+``` bash
+kubectl apply -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: <DOMINIO_EMPRESA>
+  namespace: app-dev
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/group.name: <DOMINIO_EMPRESA>
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:<AWS_REGION>:<AWS_ACCOUNT_ID>:certificate/<ID_CERTIFICADO>
+spec:
+  ingressClassName: alb
+  rules:
+    - host: SEU_APP.<DOMINIO_EMPRESA>
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kube-dns
+                port:
+                  number: 53
+EOF
+
+```
