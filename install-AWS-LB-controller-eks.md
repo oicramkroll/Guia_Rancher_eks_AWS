@@ -473,19 +473,18 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: <DOMINIO_EMPRESA>
-  namespace: app-dev
+  namespace: kube-system
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/group.name: <DOMINIO_EMPRESA>
     alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:<AWS_REGION>:<AWS_ACCOUNT_ID>:certificate/<ID_CERTIFICADO>
+    alb.ingress.kubernetes.io/target-type: ip
 spec:
   ingressClassName: alb
   rules:
-    - host: SEU_APP.<DOMINIO_EMPRESA>
+    - host: dummy.project-zero.work
       http:
         paths:
           - path: /
